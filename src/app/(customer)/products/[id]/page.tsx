@@ -19,10 +19,20 @@ export default async function ProductDetailPage({ params }: { params: { id: stri
   });
   if (!product) notFound();
 
+  const hasImage = Boolean(product.images && product.images.length > 0 && product.images[0]);
+
   return (
     <div className="grid md:grid-cols-2 gap-8">
-      <Card className="h-80 flex items-center justify-center text-8xl bg-slate-100 dark:bg-slate-800">
-        {CATEGORY_ICON[product.category?.name ?? ""] ?? "🛍️"}
+      <Card className="h-80 md:h-96 flex items-center justify-center text-8xl bg-slate-100 dark:bg-slate-800 overflow-hidden relative">
+        {hasImage ? (
+          <img
+            src={product.images![0]}
+            alt={product.name}
+            className="w-full h-full object-cover"
+          />
+        ) : (
+          CATEGORY_ICON[product.category?.name ?? ""] ?? "🛍️"
+        )}
       </Card>
       <div>
         <div className="text-xs uppercase tracking-wide text-slate-500 mb-2">{product.category?.name}</div>

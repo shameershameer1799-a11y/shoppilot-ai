@@ -15,6 +15,7 @@ export type ProductCardData = {
   rating: string;
   reviewCount: number;
   category?: { name: string } | null;
+  images?: string[] | null;
 };
 
 export function ProductCard({ product, initialWished = false }: { product: ProductCardData; initialWished?: boolean }) {
@@ -47,14 +48,25 @@ export function ProductCard({ product, initialWished = false }: { product: Produ
     }
   }
 
+  const hasImage = Boolean(product.images && product.images.length > 0 && product.images[0]);
+
   return (
     <Link href={`/products/${product.id}`}>
-      <Card className="overflow-hidden hover:-translate-y-0.5 transition h-full flex flex-col">
-        <div className="h-32 flex items-center justify-center text-4xl relative bg-slate-100 dark:bg-slate-800">
-          {CATEGORY_ICON[product.category?.name ?? ""] ?? "🛍️"}
+      <Card className="overflow-hidden hover:-translate-y-0.5 transition h-full flex flex-col group">
+        <div className="h-44 flex items-center justify-center text-4xl relative bg-slate-100 dark:bg-slate-800 overflow-hidden">
+          {hasImage ? (
+            <img
+              src={product.images![0]}
+              alt={product.name}
+              className="w-full h-full object-cover group-hover:scale-105 transition duration-300"
+              loading="lazy"
+            />
+          ) : (
+            CATEGORY_ICON[product.category?.name ?? ""] ?? "🛍️"
+          )}
           <button
             onClick={toggleWish}
-            className={`absolute top-2 right-2 w-7 h-7 rounded-full border flex items-center justify-center text-xs bg-white dark:bg-slate-900 ${wished ? "text-red-500 border-red-400" : "border-slate-200 dark:border-slate-700"}`}
+            className={`absolute top-2 right-2 w-7 h-7 rounded-full border flex items-center justify-center text-xs bg-white/80 dark:bg-slate-900/80 backdrop-blur-sm ${wished ? "text-red-500 border-red-400" : "border-slate-200 dark:border-slate-700"}`}
             aria-label="Toggle wishlist"
           >
             <Heart size={13} fill={wished ? "currentColor" : "none"} />

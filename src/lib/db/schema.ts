@@ -165,6 +165,9 @@ export const orders = pgTable("orders", {
   paymentMethod: varchar("payment_method", { length: 40 }),
   paymentRef: varchar("payment_ref", { length: 120 }), // stripe payment_intent id, or "mock_xxx"
   isMockPayment: boolean("is_mock_payment").default(true),
+  razorpayOrderId: varchar("razorpay_order_id", { length: 120 }),
+  razorpayPaymentId: varchar("razorpay_payment_id", { length: 120 }),
+  razorpaySignature: varchar("razorpay_signature", { length: 255 }),
   createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
   updatedAt: timestamp("updated_at", { withTimezone: true }).defaultNow().notNull(),
 }, (t) => ({
@@ -300,6 +303,12 @@ export const campaigns = pgTable("campaigns", {
   status: campaignStatusEnum("status").notNull().default("draft"),
   targetSegment: segmentEnum("target_segment"),
   offer: varchar("offer", { length: 120 }), // e.g. "10% off"
+  audienceDescription: text("audience_description"),
+  reasoning: text("reasoning"),
+  expectedImpact: text("expected_impact"),
+  targetProducts: jsonb("target_products").$type<string[]>().default([]),
+  approvedBy: uuid("approved_by").references(() => users.id, { onDelete: "set null" }),
+  approvedAt: timestamp("approved_at", { withTimezone: true }),
   sentCount: integer("sent_count").default(0),
   recoveredRevenue: numeric("recovered_revenue", { precision: 12, scale: 2 }).default("0"),
   conversionRate: numeric("conversion_rate", { precision: 5, scale: 2 }).default("0"),
@@ -307,6 +316,28 @@ export const campaigns = pgTable("campaigns", {
   createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
 }, (t) => ({
   businessIdx: index("campaigns_business_idx").on(t.businessId),
+}));
+
+export const agentAuditTrail = pgTable("agent_audit_trail", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  agent: varchar("agent", { length: 40 }).notNull(), // BUYER_AGENT | MERCHANT_GROWTH_AGENT
+  userId: uuid("user_id").references(() => users.id, { onDelete: "set null" }),
+  businessId: uuid("business_id").references(() => businesses.id, { onDelete: "set null" }),
+  action: varchar("action", { length: 80 }).notNull(),
+  tool: varchar("tool", { length: 80 }),
+  inputSummary: text("input_summary"),
+  reason: text("reason"),
+  amount: numeric("amount", { precision: 12, scale: 2 }),
+  approvalStatus: varchar("approval_status", { length: 40 }).default("N_A"), // N_A | DRAFT | PENDING | APPROVED | REJECTED | EXECUTED
+  result: text("result"),
+  failureReason: text("failure_reason"),
+  metadata: jsonb("metadata").$type<Record<string, unknown>>().default({}),
+  createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
+}, (t) => ({
+  agentIdx: index("agent_audit_trail_agent_idx").on(t.agent),
+  userIdx: index("agent_audit_trail_user_idx").on(t.userId),
+  businessIdx: index("agent_audit_trail_business_idx").on(t.businessId),
+  createdIdx: index("agent_audit_trail_created_idx").on(t.createdAt),
 }));
 
 export const analyticsEvents = pgTable("analytics_events", {
@@ -333,11 +364,28 @@ export const usersRelations = relations(users, ({ one, many }) => ({
   wishlist: many(wishlist),
 }));
 
+export const profilesRelations = relations(profiles, ({ one }) => ({
+  user: one(users, { fields: [profiles.userId], references: [users.id] }),
+}));
+
+export const categoriesRelations = relations(categories, ({ many }) => ({
+  products: many(products),
+}));
+
 export const productsRelations = relations(products, ({ one, many }) => ({
   category: one(categories, { fields: [products.categoryId], references: [categories.id] }),
   business: one(businesses, { fields: [products.businessId], references: [businesses.id] }),
   reviews: many(reviews),
   inventory: many(inventory),
+}));
+
+export const reviewsRelations = relations(reviews, ({ one }) => ({
+  product: one(products, { fields: [reviews.productId], references: [products.id] }),
+  user: one(users, { fields: [reviews.userId], references: [users.id] }),
+}));
+
+export const inventoryRelations = relations(inventory, ({ one }) => ({
+  product: one(products, { fields: [inventory.productId], references: [products.id] }),
 }));
 
 export const cartRelations = relations(cart, ({ one, many }) => ({
@@ -374,6 +422,18 @@ export const customersRelations = relations(customers, ({ one, many }) => ({
   segments: many(customerSegments),
 }));
 
+export const customerSegmentsRelations = relations(customerSegments, ({ one }) => ({
+  customer: one(customers, { fields: [customerSegments.customerId], references: [customers.id] }),
+}));
+
+export const campaignsRelations = relations(campaigns, ({ one }) => ({
+  business: one(businesses, { fields: [campaigns.businessId], references: [businesses.id] }),
+}));
+
+export const aiInsightsRelations = relations(aiInsights, ({ one }) => ({
+  business: one(businesses, { fields: [aiInsights.businessId], references: [businesses.id] }),
+}));
+
 export const aiConversationsRelations = relations(aiConversations, ({ one, many }) => ({
   user: one(users, { fields: [aiConversations.userId], references: [users.id] }),
   messages: many(aiMessages),
@@ -392,4 +452,9 @@ export const analyticsEventsRelations = relations(analyticsEvents, ({ one }) => 
   user: one(users, { fields: [analyticsEvents.userId], references: [users.id] }),
   business: one(businesses, { fields: [analyticsEvents.businessId], references: [businesses.id] }),
   product: one(products, { fields: [analyticsEvents.productId], references: [products.id] }),
+}));
+
+export const agentAuditTrailRelations = relations(agentAuditTrail, ({ one }) => ({
+  user: one(users, { fields: [agentAuditTrail.userId], references: [users.id] }),
+  business: one(businesses, { fields: [agentAuditTrail.businessId], references: [businesses.id] }),
 }));

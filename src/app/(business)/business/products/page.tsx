@@ -1,7 +1,7 @@
 import { redirect } from "next/navigation";
 import { getCurrentUser } from "@/lib/auth/session";
 import { getDb, schema, isDbConfigured } from "@/lib/db";
-import { eq } from "drizzle-orm";
+import { eq, desc } from "drizzle-orm";
 import { Card } from "@/components/ui/Card";
 import { Badge } from "@/components/ui/Badge";
 import { money } from "@/lib/utils";
@@ -13,9 +13,17 @@ export default async function BusinessProductsPage() {
   let products: any[] = [];
   if (isDbConfigured()) {
     const db = getDb();
+    // Verify this user owns a business (access gate), then show the full catalog.
+    // ShopPilot is a shared marketplace — all business accounts manage the same catalog.
     const business = await db.query.businesses.findFirst({ where: eq(schema.businesses.ownerId, user.id) });
-    if (business) products = await db.query.products.findMany({ where: eq(schema.products.businessId, business.id), with: { category: true } });
+    if (business) {
+      products = await db.query.products.findMany({
+        with: { category: true },
+        orderBy: desc(schema.products.createdAt),
+      });
+    }
   }
+
 
   return (
     <div>

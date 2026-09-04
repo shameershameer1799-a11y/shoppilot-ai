@@ -12,7 +12,7 @@ const querySchema = z.object({
   minRating: z.coerce.number().optional(),
   sort: z.enum(["price-asc", "price-desc", "rating"]).optional(),
   page: z.coerce.number().default(1),
-  pageSize: z.coerce.number().default(20),
+  pageSize: z.coerce.number().default(200),
 });
 
 export async function GET(req: Request) {

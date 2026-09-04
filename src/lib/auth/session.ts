@@ -9,17 +9,38 @@ export type SessionUser = {
   accountType: "customer" | "business";
 };
 
-/** Reads the current authenticated user from the Supabase session (server-side only). */
+/** Reads the current authenticated user from the Supabase session (server-side only).
+ *  Falls back to the Drizzle `users` table for accountType when Supabase metadata
+ *  does not include the field (e.g. for accounts created before the field was added). */
 export async function getCurrentUser(): Promise<SessionUser | null> {
   const supabase = await createSupabaseServerClient();
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return null;
 
+  // Prefer Supabase metadata; fall back to the Drizzle users table.
+  let accountType = (user.user_metadata?.account_type as "customer" | "business") ?? null;
+  let fullName = (user.user_metadata?.full_name as string) ?? null;
+
+  if (!accountType || !fullName) {
+    try {
+      const db = getDb();
+      const dbUser = await db.query.users.findFirst({
+        where: eq(schema.users.id, user.id),
+      });
+      if (dbUser) {
+        accountType = accountType ?? dbUser.accountType;
+        fullName = fullName ?? dbUser.fullName;
+      }
+    } catch {
+      // DB may be unavailable during build or cold start; fall back gracefully.
+    }
+  }
+
   return {
     id: user.id,
     email: user.email ?? "",
-    fullName: (user.user_metadata?.full_name as string) ?? user.email ?? "User",
-    accountType: (user.user_metadata?.account_type as "customer" | "business") ?? "customer",
+    fullName: fullName ?? user.email ?? "User",
+    accountType: accountType ?? "customer",
   };
 }
 

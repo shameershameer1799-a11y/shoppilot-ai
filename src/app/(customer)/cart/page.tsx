@@ -57,19 +57,39 @@ export default function CartPage() {
           {data.items.length === 0 ? (
             <p className="text-sm text-slate-500">Your cart is empty. <Link href="/shop" className="text-violet-600 font-semibold">Browse products →</Link></p>
           ) : data.items.map((i) => (
-            <div key={i.id} className="flex items-center gap-3.5 py-4 border-b border-slate-200 dark:border-slate-700 last:border-0">
-              <div className="w-12 h-12 rounded-lg flex items-center justify-center text-xl bg-slate-100 dark:bg-slate-800">{CATEGORY_ICON[i.product.category?.name ?? ""] ?? "🛍️"}</div>
-              <div className="flex-1 min-w-0">
-                <Link href={`/products/${i.product.id}`} className="text-sm font-semibold hover:text-violet-600">{i.product.name}</Link>
-                <div className="text-xs text-slate-500">{money(i.product.price)} each</div>
+            <div key={i.id} className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 py-4 border-b border-slate-200 dark:border-slate-700 last:border-0">
+              <div className="flex items-center gap-3 min-w-0 flex-1">
+                <div className="w-12 h-12 rounded-lg flex items-center justify-center text-xl bg-slate-100 dark:bg-slate-800 flex-shrink-0">
+                  {CATEGORY_ICON[i.product.category?.name ?? ""] ?? "🛍️"}
+                </div>
+                <div className="flex-1 min-w-0">
+                  <Link href={`/products/${i.product.id}`} className="text-sm font-semibold hover:text-violet-600 truncate block">
+                    {i.product.name}
+                  </Link>
+                  <div className="text-xs text-slate-500">{money(i.product.price)} each</div>
+                </div>
               </div>
-              <div className="flex items-center border border-slate-200 dark:border-slate-700 rounded-lg">
-                <button onClick={() => changeQty(i.id, i.quantity - 1)} className="w-7 h-7 flex items-center justify-center"><Minus size={13} /></button>
-                <span className="w-7 text-center text-sm">{i.quantity}</span>
-                <button onClick={() => changeQty(i.id, i.quantity + 1)} className="w-7 h-7 flex items-center justify-center"><Plus size={13} /></button>
+
+              <div className="flex items-center justify-between sm:justify-end gap-3 w-full sm:w-auto">
+                <div className="flex items-center border border-slate-200 dark:border-slate-700 rounded-lg">
+                  <button onClick={() => changeQty(i.id, i.quantity - 1)} className="w-8 h-8 flex items-center justify-center text-slate-500 hover:text-slate-800 dark:hover:text-slate-200">
+                    <Minus size={13} />
+                  </button>
+                  <span className="w-8 text-center text-sm font-mono">{i.quantity}</span>
+                  <button onClick={() => changeQty(i.id, i.quantity + 1)} className="w-8 h-8 flex items-center justify-center text-slate-500 hover:text-slate-800 dark:hover:text-slate-200">
+                    <Plus size={13} />
+                  </button>
+                </div>
+                <div className="w-24 text-right font-semibold text-sm">
+                  {money(Number(i.product.price) * i.quantity)}
+                </div>
+                <button
+                  onClick={() => remove(i.id)}
+                  className="text-xs px-2.5 py-1.5 rounded-lg border border-slate-200 dark:border-slate-700 text-slate-500 hover:text-red-600 hover:border-red-300 transition"
+                >
+                  Remove
+                </button>
               </div>
-              <div className="w-20 text-right font-semibold text-sm">{money(Number(i.product.price) * i.quantity)}</div>
-              <button onClick={() => remove(i.id)} className="text-xs px-2 py-1 rounded-lg border border-slate-200 dark:border-slate-700 text-slate-500">Remove</button>
             </div>
           ))}
         </Card>

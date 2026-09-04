@@ -49,33 +49,40 @@ export default function ShopPage() {
       <h1 className="text-2xl font-bold mb-1 font-display">Shop</h1>
       <p className="text-sm mb-5 text-slate-500">Browse the full catalog</p>
 
-      <div className="flex flex-wrap gap-2.5 mb-5">
-        <div className="relative flex-1" style={{ minWidth: 200 }}>
+      <div className="flex flex-col sm:flex-row flex-wrap gap-2.5 mb-6">
+        <div className="relative flex-1 min-w-full sm:min-w-[220px]">
           <Search size={15} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500" />
-          <input className="field-input pl-9" placeholder="Search products..." value={search} onChange={(e) => setSearch(e.target.value)} />
+          <input
+            className="field-input pl-9 w-full"
+            placeholder="Search products..."
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+          />
         </div>
-        <select className="field-input w-auto" value={category} onChange={(e) => setCategory(e.target.value)}>
-          <option value="">All Categories</option>
-          {CATEGORIES.map((c) => <option key={c}>{c}</option>)}
-        </select>
-        <select className="field-input w-auto" value={price} onChange={(e) => setPrice(e.target.value)}>
-          <option value="">Any Price</option>
-          <option value="0-5000">Under ₹5,000</option>
-          <option value="5000-20000">₹5,000–₹20,000</option>
-          <option value="20000-60000">₹20,000–₹60,000</option>
-          <option value="60000-999999">₹60,000+</option>
-        </select>
-        <select className="field-input w-auto" value={rating} onChange={(e) => setRating(e.target.value)}>
-          <option value="">Any Rating</option>
-          <option value="4.5">4.5★ &amp; up</option>
-          <option value="4">4★ &amp; up</option>
-        </select>
-        <select className="field-input w-auto" value={sort} onChange={(e) => setSort(e.target.value)}>
-          <option value="">Sort: Featured</option>
-          <option value="price-asc">Price: Low to High</option>
-          <option value="price-desc">Price: High to Low</option>
-          <option value="rating">Rating</option>
-        </select>
+        <div className="grid grid-cols-2 sm:flex sm:flex-wrap gap-2 w-full sm:w-auto">
+          <select className="field-input w-full sm:w-auto text-xs sm:text-sm" value={category} onChange={(e) => setCategory(e.target.value)}>
+            <option value="">All Categories</option>
+            {CATEGORIES.map((c) => <option key={c}>{c}</option>)}
+          </select>
+          <select className="field-input w-full sm:w-auto text-xs sm:text-sm" value={price} onChange={(e) => setPrice(e.target.value)}>
+            <option value="">Any Price</option>
+            <option value="0-5000">Under ₹5,000</option>
+            <option value="5000-20000">₹5,000–₹20,000</option>
+            <option value="20000-60000">₹20,000–₹60,000</option>
+            <option value="60000-999999">₹60,000+</option>
+          </select>
+          <select className="field-input w-full sm:w-auto text-xs sm:text-sm" value={rating} onChange={(e) => setRating(e.target.value)}>
+            <option value="">Any Rating</option>
+            <option value="4.5">4.5★ &amp; up</option>
+            <option value="4">4★ &amp; up</option>
+          </select>
+          <select className="field-input w-full sm:w-auto text-xs sm:text-sm" value={sort} onChange={(e) => setSort(e.target.value)}>
+            <option value="">Sort: Featured</option>
+            <option value="price-asc">Price: Low to High</option>
+            <option value="price-desc">Price: High to Low</option>
+            <option value="rating">Rating</option>
+          </select>
+        </div>
       </div>
 
       {loading ? (

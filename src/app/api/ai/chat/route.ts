@@ -13,8 +13,7 @@ const bodySchema = z.object({
 
 /**
  * Unified chat endpoint used by both /ai-shop (customer) and
- * /business/ai-growth (business). `kind` picks the persona; the
- * conversation + message history are persisted either way.
+ * /business/ai-growth (business).
  */
 export async function POST(req: Request) {
   const user = await requireUser();
@@ -28,44 +27,55 @@ export async function POST(req: Request) {
   let conversationId = parsed.data.conversationId;
   if (!conversationId) {
     const [conv] = await db.insert(schema.aiConversations).values({
-      userId: user.id, kind: parsed.data.kind, title: parsed.data.message.slice(0, 60),
+      userId: user.id,
+      kind: parsed.data.kind,
+      title: parsed.data.message.slice(0, 60),
     }).returning();
     conversationId = conv.id;
   }
 
   await db.insert(schema.aiMessages).values({
-    conversationId, role: "user", content: parsed.data.message,
+    conversationId,
+    role: "user",
+    content: parsed.data.message,
   });
 
   let assistantContent: string;
-  let metadata: Record<string, unknown> = {};
+  let responseData: Record<string, unknown> = {};
 
   if (parsed.data.kind === "shopping") {
-    const { requirements, matches } = await runShoppingChat(parsed.data.message);
-    assistantContent = matches.length
-      ? `Found ${matches.length} strong match${matches.length !== 1 ? "es" : ""}.`
-      : "I couldn't find a strong match — try a different category or a wider budget.";
-    metadata = { requirements, matches };
-
-    // Store as recommendations for the dashboard's "AI insight" surface
-    if (matches.length) {
-      await db.insert(schema.recommendations).values(
-        matches.map((m) => ({
-          userId: user.id, productId: m.id, matchScore: m.score, reasons: m.reasons, source: "ai_chat",
-        }))
-      );
-    }
+    const result = await runShoppingChat(parsed.data.message, user.id);
+    assistantContent = result.content;
+    responseData = {
+      requirements: result.requirements,
+      matches: result.matches,
+      comparison: result.comparison,
+      upsells: result.upsells,
+      cart: result.cart,
+      checkout: result.checkout,
+      recoveryAlternative: result.recoveryAlternative,
+    };
   } else {
     const business = await db.query.businesses.findFirst({ where: eq(schema.businesses.ownerId, user.id) });
     if (!business) return NextResponse.json({ error: "No business profile found" }, { status: 400 });
-    const result = await runGrowthAnalysis(business.id, parsed.data.message);
+    const result = await runGrowthAnalysis(business.id, parsed.data.message, user.id);
     assistantContent = result.text;
-    metadata = { opportunities: result.opportunities };
+    responseData = {
+      opportunities: result.opportunities,
+      kpis: result.kpis,
+    };
   }
 
   await db.insert(schema.aiMessages).values({
-    conversationId, role: "assistant", content: assistantContent, metadata,
+    conversationId,
+    role: "assistant",
+    content: assistantContent,
+    metadata: responseData,
   });
 
-  return NextResponse.json({ conversationId, content: assistantContent, ...metadata });
+  return NextResponse.json({
+    conversationId,
+    content: assistantContent,
+    ...responseData,
+  });
 }

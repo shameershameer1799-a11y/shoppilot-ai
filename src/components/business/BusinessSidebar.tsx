@@ -2,7 +2,18 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { BarChart3, Package, ShoppingCart, Users, TrendingUp, Megaphone, Bot, Settings, Lightbulb } from "lucide-react";
+import {
+  BarChart3,
+  Package,
+  ShoppingCart,
+  Users,
+  TrendingUp,
+  Megaphone,
+  Bot,
+  Settings,
+  Lightbulb,
+  ShieldCheck,
+} from "lucide-react";
 import { cn } from "@/lib/utils";
 
 const LINKS = [
@@ -14,6 +25,7 @@ const LINKS = [
   { href: "/business/campaigns", label: "Campaigns", icon: Megaphone },
   { href: "/business/ai-insights", label: "AI Insights", icon: Lightbulb },
   { href: "/business/ai-growth", label: "AI Growth Assistant", icon: Bot },
+  { href: "/business/audit-trail", label: "Agent Audit Trail", icon: ShieldCheck },
   { href: "/business/settings", label: "Settings", icon: Settings },
 ];
 
@@ -28,8 +40,10 @@ export function BusinessSidebar() {
             key={href}
             href={href}
             className={cn(
-              "flex items-center gap-2.5 px-3 py-2.5 rounded-lg text-sm font-medium mb-0.5",
-              active ? "bg-violet-100 text-violet-700 font-semibold" : "text-slate-500 hover:bg-slate-50 dark:hover:bg-slate-800"
+              "flex items-center gap-2.5 px-3 py-2.5 rounded-lg text-sm font-medium mb-0.5 transition",
+              active
+                ? "bg-violet-100 text-violet-700 dark:bg-violet-950/60 dark:text-violet-300 font-semibold"
+                : "text-slate-500 hover:bg-slate-50 dark:hover:bg-slate-800"
             )}
           >
             <Icon size={16} /> {label}
